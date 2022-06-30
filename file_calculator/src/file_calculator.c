@@ -3,7 +3,7 @@
  Name        : calculator.c
  Author      : Добрыдень Яна
  License     : GNU GPL
- Description : Работа со списками
+ Description : Работа c очередями
  ============================================================================
  */
 #include <stdio.h>
@@ -13,317 +13,268 @@
 char inputFName[259], outputFName[259];
 char h;
 
-// Структура списка
-typedef struct spisochek
+typedef struct ocherednyara 
 {
 	char c;
-	double result;
-	// Для векторов
-	double *A,*B;
-	// Режим работы
 	char working_mode;
-	// Для результата
 	double *result_value;
-	// Для размерности вектора
+
+	double result;
+	double *A,*B;
+	
 	int size;
-	struct spisochek *next_value;
+	struct ocherednyara *next;
 } 
-spisochek;
+ocherednyara;
 
+typedef struct ochered {
+	ocherednyara *main_val;
 
-typedef struct spisochek_calculate
-{
-	spisochek *main_val;
-	spisochek *hd_val;
-} 
-spisochek_calculate;
+	ocherednyara *hd_val;
+} ochered;
 
-
-void init_spisochek (spisochek_calculate *value)
-{
-	value->main_val = NULL;
-	value->hd_val = NULL;
+void init_ochered (ochered *O) {
+	O->main_val = NULL;
+	O->hd_val = NULL;
+	
 }
 
-void add_in_spisochek (spisochek_calculate *value, spisochek *data_info)
-{
-	spisochek* tmp_information = malloc (sizeof(spisochek));
-	spisochek *last_val = value->hd_val;
-	tmp_information->next_value = NULL;
-
+void ochered_main (ochered *O, ocherednyara *data_info) {
+	ocherednyara* tmp_information = malloc (sizeof(ocherednyara));
 	tmp_information->A = data_info->A;
 	tmp_information->B = data_info->B;
-	
 	tmp_information->c = data_info->c;
-	
+
 	tmp_information->working_mode = data_info->working_mode;
 	
 	tmp_information->size = data_info->size;
-	
+	tmp_information->next = NULL;
 	tmp_information->result_value = data_info->result_value;
-	
 	tmp_information->result = data_info->result;
-	
-	if (value->hd_val == NULL)
-	{
-		value->hd_val = tmp_information;
-		return;
+	if (O->main_val != NULL) {
+		O->main_val->next = tmp_information;
 	}
-	
-	while (last_val->next_value != NULL)
-	{
-		last_val = last_val->next_value;
+	O->main_val = tmp_information;
+	if (O->hd_val == NULL) {
+		O->hd_val = tmp_information;
 	}
-	last_val->next_value = tmp_information;
-	return;
 }
 
-void del_spisochek (spisochek_calculate *S)
+ocherednyara* del_ochered (ochered *O)
 {
-	spisochek *tmp_info;
-	if (&S->hd_val==NULL) 
-		return;
-	tmp_info = S->hd_val;
-	S->hd_val = S->hd_val->next_value;
-	free (tmp_info);
+	ocherednyara *value_out;
+	value_out = malloc (sizeof (ocherednyara));
+	if (O->hd_val == NULL) {
+		value_out = NULL;
+		return value_out;
+	}
+	ocherednyara *tmp_information = O->hd_val;
+	value_out->c = tmp_information->c;
+	value_out->result_value = tmp_information->result_value;
+	value_out->result = tmp_information->result;
+	value_out->A = tmp_information->A;
+	value_out->B = tmp_information->B;
+	value_out->size = tmp_information->size;
+	value_out->working_mode = tmp_information->working_mode;
+
+	O->hd_val = O->hd_val->next;
+	if (O->hd_val == NULL) {
+		O->main_val = NULL;
+	}
+
+	free (tmp_information);
+	return value_out;
 }
-
-spisochek* next_val_spisochek (spisochek_calculate *S)
-{
-	S->main_val = S->main_val->next_value;
-	return S->main_val;
-}
-
-
-char inputFName[259], outputFName[259];
-char h; double d, result_val_calc;
+double d, result_value;
 double *result;
-
 FILE *input,*output;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
 	
-	spisochek *spisok_calc;
-	spisochek_calculate spisochek1, spisochek2;
-	
-	do
-	{
-		init_spisochek (&spisochek1);
-		init_spisochek (&spisochek2);
+	ocherednyara *ochered_value;
+	ochered ocherednyara1, ocherednyara2;
+	do {
+		init_ochered (&ocherednyara1);
+		init_ochered (&ocherednyara2);
 		printf ("Введите название файла, из которого будут взяты данные (формат'.txt'): ");
 		scanf ("%s", inputFName);
 		printf ("Введите название файла, в который будут записаны результаты вычислений (формат'.txt'): ");
 		scanf ("%s", outputFName);
 
 		input = fopen (inputFName, "r");
-		spisok_calc = malloc (sizeof (spisochek));
-		// Считав файл, идем до его конца
-		while (feof(input) == 0) 
-		{
-			fscanf (input, " %c %c", &spisok_calc->c, &spisok_calc->working_mode);
-			switch (spisok_calc->working_mode)
-			// Режим работы 
-			{ 
-			case 'v':
-				fscanf (input, "%i", &spisok_calc->size); 
-				spisok_calc->A = malloc (spisok_calc->size*sizeof(double));
-				spisok_calc->B = malloc (spisok_calc->size*sizeof(double));
-				// Выделив память для векторов - заполняем их
-				for (int i=0;i<spisok_calc->size;i++)
-				{ 
-				fscanf (input, "%lf", &spisok_calc->A[i]);
-				}
-				for (int i=0;i<spisok_calc->size;i++) 
-				{
-				fscanf (input, "%lf", &spisok_calc->B[i]);
-				}
-				break;
-			case 'n':
-				spisok_calc->size = 1;
-				if (spisok_calc->c == '!')
-				{
-				spisok_calc->A = malloc (sizeof (double));
-				fscanf (input, "%lf", &spisok_calc->A[0]);
-				spisok_calc->B = NULL;
-				} 
-				else 
-				{
-				spisok_calc->A = malloc (sizeof(double));
-				spisok_calc->B = malloc (sizeof(double));
-				fscanf (input, "%lf", &spisok_calc->A[0]);
-				fscanf (input, "%lf", &spisok_calc->B[0]);
-				}
-				break;
+		ochered_value = malloc (sizeof (ocherednyara));
+		while (feof(input) == 0) {
+			fscanf (input, " %c %c", &ochered_value->c, &ochered_value->working_mode);
+			switch (ochered_value->working_mode) { 
+				case 'v':
+					fscanf (input, "%i", &ochered_value->size); 
+					ochered_value->A = malloc (ochered_value->size*sizeof(double));
+					ochered_value->B = malloc (ochered_value->size*sizeof(double));
+					for (int i=0;i<ochered_value->size;i++) 
+					{
+						fscanf (input, "%lf", &ochered_value->A[i]);
+					}
+					for (int i=0; i < ochered_value->size; i++) 
+					{
+						fscanf (input, "%lf", &ochered_value->B[i]);
+					}
+					break;
+				case 'n':
+					ochered_value->size = 1;
+					if (ochered_value->c == '!') 
+					{
+						ochered_value->A = malloc (sizeof (double));
+						fscanf (input, "%lf", &ochered_value->A[0]);
+						ochered_value->B = NULL;
+					} 
+					else 
+					{
+						ochered_value->A = malloc (sizeof(double));
+						ochered_value->B = malloc (sizeof(double));
+						fscanf (input, "%lf", &ochered_value->A[0]);
+						fscanf (input, "%lf", &ochered_value->B[0]);
+					}
+					break;
 			}
-			add_in_spisochek (&spisochek1, spisok_calc);
+			ochered_main (&ocherednyara1, ochered_value);
 		}
+		free (ochered_value);
 		fclose (input);
-		spisochek1.main_val = spisochek1.hd_val;
-		while (spisochek1.main_val != NULL) 
+		while ((ochered_value = del_ochered(&ocherednyara1)) != NULL) 
 		{
-			spisok_calc->working_mode = spisochek1.main_val->working_mode;
-			
-			spisok_calc->A = spisochek1.main_val->A;
-			spisok_calc->B = spisochek1.main_val->B;
-			spisok_calc->c = spisochek1.main_val->c;
-
-			spisok_calc->result = spisochek1.main_val->result;
-			spisok_calc->result_value = spisochek1.main_val->result_value;
-			
-			spisok_calc->size = spisochek1.main_val->size;
-			switch (spisok_calc->working_mode) 
+			switch (ochered_value->working_mode) 
 			{
 			case 'v':
-				switch (spisok_calc->c) 
-				{
-				case '+':
-					result = malloc (spisok_calc->size*sizeof(double));
-					for (int i=0;i<spisok_calc->size;i++)
-					{ 
-					result[i] = spisok_calc->A[i]+spisok_calc->B[i];
-					}
-					spisok_calc->result_value=result;
-					break;
-				case '-':
-					for (int i=0;i<spisok_calc->size;i++) 
-					{
-					result[i] = spisok_calc->A[i]-spisok_calc->B[i];
-					}
-					spisok_calc->result_value = result;
-					break;
-				case '*':
-					for (int i=0;i<spisok_calc->size;i++) 
-					{
-					result_val_calc += spisok_calc->A[i] * spisok_calc->B[i];
-					}
-					spisok_calc->result = result_val_calc;
-					break;
+				switch (ochered_value->c) {
+					case '+':
+						result = malloc (ochered_value->size*sizeof(double));
+						for (int i=0; i < ochered_value->size; i++)
+						{ 
+						result[i] = ochered_value->A[i] + ochered_value->B[i];
+						}
+						ochered_value->result_value = result;
+						break;
+					case '-':
+						for (int i=0; i < ochered_value->size; i++) 
+						{
+						result[i] = ochered_value->A[i] - ochered_value->B[i];
+						}
+						ochered_value->result_value = result;
+						break;
+					case '*':
+						result_value = 0;
+						for (int i=0; i < ochered_value->size; i++) 
+						{
+							result_value += ochered_value->A[i] * ochered_value->B[i];
+						}
+						ochered_value->result = result_value;
+						break;
 				}
 				break;
 			case 'n':
-				switch (spisok_calc->c) 
-				{
-				case '+': 
-					spisok_calc->result = spisok_calc->A[0]+spisok_calc->B[0];
-					break;
-				case '-': 
-					spisok_calc->result = spisok_calc->A[0]-spisok_calc->B[0];
-					break;
-				case '*': 
-					spisok_calc->result = spisok_calc->A[0]*spisok_calc->B[0];
-					break;
-				case '/': 
-					spisok_calc->result = spisok_calc->A[0]/spisok_calc->B[0];
-					break;
-				case '^': 
-					d=spisok_calc->A[0]; 
-					for (int i=1; i < spisok_calc->B[0]; i++)
-					{
-					d=d*spisok_calc->A[0];
-					}
-					spisok_calc->result = d;
-					break;
-				case '!': 
-					d=1; 
-					if (spisok_calc->A[0]>=0)
-					{
-					for (int i=0;i<spisok_calc->A[0];i++)
-					{
-					d=d*(i+1);
-					}
-					}
-					spisok_calc->result = d;
-					break;
+				switch (ochered_value->c) {
+					case '+': 
+						ochered_value->result = ochered_value->A[0] + ochered_value->B[0];
+						break;
+					case '-': 
+						ochered_value->result = ochered_value->A[0] - ochered_value->B[0];
+						break;
+					case '*': 
+						ochered_value->result = ochered_value->A[0] * ochered_value->B[0];
+						break;
+					case '/': 
+						ochered_value->result = ochered_value->A[0] / ochered_value->B[0];
+						break;
+					case '^': 
+						d=ochered_value->A[0];
+						for (int i=1;i<ochered_value->B[0];i++) 
+						{
+							d = d * ochered_value->A[0];
+						}
+						ochered_value->result = d;
+						break;
+					case '!':
+						d=1;
+						if (ochered_value->A[0] >= 0) 
+						{
+							for (int i=0;i<ochered_value->A[0];i++) 
+							{
+								d=d*(i+1);
+							}
+						}
+						ochered_value->result = d;
+						break;
 				}
-				break;
 			}
-			add_in_spisochek (&spisochek2, spisok_calc);
-			next_val_spisochek (&spisochek1);
+			ochered_main (&ocherednyara2, ochered_value);
 		}
 		if ((output = fopen(outputFName, "a")) == NULL) 
 		{
-		output = fopen(outputFName, "w");
+			output = fopen(outputFName, "w");
 		}
-		free (spisok_calc);
-
-		spisochek1.main_val = spisochek1.hd_val;
-		spisochek2.main_val = spisochek2.hd_val;
-		
-		while (spisochek2.main_val != NULL) 
+		while ((ochered_value = del_ochered(&ocherednyara2)) != NULL) 
 		{
-			switch (spisochek2.main_val->working_mode) 
+			switch (ochered_value->working_mode) 
 			{
 			case 'v':
 				fprintf (output, "( ");
-				for (int i = 0; i < spisochek2.main_val->size; i++) 
+				for (int i=0; i<ochered_value->size;i++) 
 				{
-				if (i == spisochek2.main_val->size-1) 
+					if (i==ochered_value->size-1) 
+					{
+						fprintf (output, "%lf", ochered_value->A[i]);
+					} 
+					else
+					{ 
+						fprintf (output, "%lf ", ochered_value->A[i]);
+					}
+				}
+				fprintf (output, " ) %c ( ", ochered_value->c);
+				for (int i=0;i<ochered_value->size;i++) 
 				{
-				fprintf (output, "%lf", spisochek2.main_val->A[i]);
+					if (i==ochered_value->size-1) {
+						fprintf (output, "%lf", ochered_value->B[i]);
+					} 
+					else 
+					{
+						fprintf (output, "%lf ", ochered_value->B[i]);
+					}
 				}
-				else
-				{ 
-				fprintf (output, "%lf ", spisochek2.main_val->A[i]);
-				}
-				}
-				fprintf (output, " ) %c ( ", spisochek2.main_val->c);
-				for (int i=0;i<spisochek2.main_val->size;i++) 
-				{
-				if (i == spisochek2.main_val->size-1) 
-				{
-				fprintf (output, "%lf", spisochek2.main_val->B[i]);
-				}
-				else
-				{ 
-				fprintf (output, "%lf ", spisochek2.main_val->B[i]);
-				}
-				}
-				if (spisochek2.main_val->c == '+' || spisochek2.main_val->c == '-') 
-				{
+				if (ochered_value->c=='+' || ochered_value->c=='-') {
 					fprintf (output, " ) = ( ");
-					for (int i=0;i<spisochek2.main_val->size;i++) {
-						if (i == spisochek2.main_val->size-1) {
-							fprintf (output, "%lf", spisochek2.main_val->result_value[i]);
-						}
+
+					for (int i = 0; i < ochered_value->size; i++) 
+					{
+						if (i==ochered_value->size-1) 
+						{
+							fprintf (output, "%lf", ochered_value->result_value[i]);
+						} 
 						else
 						{ 
-							fprintf (output, "%lf ", spisochek2.main_val->result_value[i]);
+							fprintf (output, "%lf ", ochered_value->result_value[i]);
 						}
 					}
 					fprintf (output, " )\n");
-				}
+				} 
 				else
 				{ 
-					fprintf (output, " ) = %lf\n", spisochek2.main_val->result);
+					fprintf (output, " ) = %lf\n", ochered_value->result);
 				}
 				break;
 			case 'n':
-				if (spisochek2.main_val->c == '!') 
-				{
-					fprintf (output, "%lf! = %lf\n", *spisochek2.main_val->A, spisochek2.main_val->result);
-				}
+				if (ochered_value->c=='!') {
+					fprintf (output, "%lf! = %lf\n", *ochered_value->A, ochered_value->result);
+				} 
 				else
 				{ 
-					fprintf (output, "%lf %c %lf = %lf\n", *spisochek2.main_val->A, spisochek2.main_val->c, *spisochek2.main_val->B, spisochek2.main_val->result);
+					fprintf (output, "%lf %c %lf = %lf\n", *ochered_value->A, ochered_value->c, *ochered_value->B, ochered_value->result);
 				}
 				break;
 			}
-			next_val_spisochek (&spisochek2);
 		}
 		fclose (output);
-		while (spisochek1.hd_val != NULL) 
-		{
-			del_spisochek (&spisochek1);
-		}
-
-		while (spisochek2.hd_val != NULL) 
-		{
-			del_spisochek (&spisochek2);
-		}
-
 		puts ("\nЧтобы продолжить программу введите любой символ\nДля выхода введите 1\n");
 		scanf (" %c", &h);
 	}
